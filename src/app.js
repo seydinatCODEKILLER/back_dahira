@@ -40,7 +40,31 @@ app.use("/api", generalLimiter);
 // Logger middleware
 logger.info("API middlewares initialized");
 
-// Routes
+// ✅ Route racine (/)
+app.get("/", (req, res) => {
+  res.status(200).json({
+    name: "Mon API",
+    version: "1.0.0",
+    description: "Bienvenue sur l'API, accédez à /api/docs pour la documentation",
+    endpoints: {
+      docs: "/api/docs",
+      health: "/health",
+    },
+  });
+});
+
+// ✅ Route de santé (/health)
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "UP",
+    message: "API is running",
+    version: "1.0.0",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(), // Optionnel : temps d'exécution depuis le dernier redémarrage
+  });
+});
+
+// Routes API
 app.use("/api/auth", authRoutes);
 app.use("/api/membres", membreRoutes);
 app.use("/api/configuration", configurationRoutes);
@@ -50,15 +74,6 @@ app.use("/api/soldes", soldeRoutes);
 app.use("/api/alertes", alerteRoutes);
 app.use("/api/audit-logs", auditLogRoutes);
 app.use("/api/dashboard", dashboardRoutes);
-
-// Route par défaut pour vérifier que l'API tourne
-app.get("/health", (req, res) => {
-  res.status(200).json({
-    message: "API is running",
-    version: "1.0.0",
-    timestamp: new Date().toISOString(),
-  });
-});
 
 // Error logger
 app.all("/{*path}", notFoundHandler);
