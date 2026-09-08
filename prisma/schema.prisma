@@ -1,0 +1,217 @@
+// ======================================================
+//  PRISMA SCHEMA
+// ======================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ===================================================================
+// ENUMS
+// ===================================================================
+
+enum Role {
+  ADMIN
+  MEMBRE
+}
+
+enum StatutMembre {
+  ACTIF
+  INACTIF
+  BLOQUE
+}
+
+enum StatutVersement {
+  EN_ATTENTE
+  VALIDE
+  REJETE
+}
+
+enum StatutCotisation {
+  PAYE
+  EN_ATTENTE
+  RETARD
+}
+
+enum StatutSolde {
+  A_JOUR
+  EN_AVANCE
+  EN_RETARD
+  BLOQUE
+}
+
+enum TypeAlerte {
+  ECHEANCE
+  RETARD
+}
+
+enum DestinataireAlerte {
+  MEMBRE
+  TRESORIER
+  LES_DEUX
+}
+
+// ===================================================================
+// MODELES
+// ===================================================================
+
+model Membre {
+  id         String       @id @default(uuid())
+  matricule  String       @unique
+  nom        String
+  prenom     String
+  telephone  String       @unique
+  email      String?      @unique
+  avatar     String?
+  motDePasse String
+  role       Role         @default(MEMBRE)
+  statut     StatutMembre @default(ACTIF)
+
+  dateInscription   DateTime  @default(now())
+  dateDesactivation DateTime?
+  lastLoginAt       DateTime?
+
+  // Relations
+  versements        Versement[]    @relation("VersementsDuMembre")
+  versementsValides Versement[]    @relation("ValidateurVersement")
+  cotisations       Cotisation[]
+  solde             Solde?
+  alertes           Alerte[]
+  auditLogs         AuditLog[]
+  refreshTokens     RefreshToken[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([statut])
+  @@map("membres")
+}
+
+// Paramètres métier configurables (montant cotisation, seuils, délais)
+model Configuration {
+  id                           String @id @default(uuid())
+  montantCotisationJournaliere Int    @default(100)
+  seuilAvanceJoursMax          Int    @default(30)
+  delaiRegularisationJours     Int    @default(2)
+
+  updatedAt DateTime @updatedAt
+
+  @@map("configuration")
+}
+
+// Un versement = paiement effectué par un membre (peut couvrir plusieurs jours = avance)
+model Versement {
+  id       String @id @default(uuid())
+  membre   Membre @relation("VersementsDuMembre", fields: [membreId], references: [id])
+  membreId String
+
+  montant     Int
+  nombreJours Int
+
+  periodeDebut DateTime
+  periodeFin   DateTime
+
+  statut StatutVersement @default(EN_ATTENTE)
+
+  validePar      Membre?   @relation("ValidateurVersement", fields: [valideParId], references: [id])
+  valideParId    String?
+  dateValidation DateTime?
+
+  cotisations Cotisation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([membreId])
+  @@index([statut])
+  @@map("versements")
+}
+
+// Une ligne par jour dû pour un membre → alimente le calendrier / tableau de bord
+model Cotisation {
+  id       String @id @default(uuid())
+  membre   Membre @relation(fields: [membreId], references: [id])
+  membreId String
+
+  date      DateTime         @db.Date
+  montantDu Int              @default(100)
+  statut    StatutCotisation @default(EN_ATTENTE)
+
+  versement   Versement? @relation(fields: [versementId], references: [id])
+  versementId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([membreId, date])
+  @@index([membreId, statut])
+  @@map("cotisations")
+}
+
+// Solde "cache" recalculé à chaque versement/validation, pour lecture rapide
+model Solde {
+  id       String @id @default(uuid())
+  membre   Membre @relation(fields: [membreId], references: [id])
+  membreId String @unique
+
+  soldeJours      Int         @default(0)
+  soldeMontant    Int         @default(0)
+  dernierJourPaye DateTime?
+  statut          StatutSolde @default(A_JOUR)
+
+  updatedAt DateTime @updatedAt
+
+  @@map("soldes")
+}
+
+model Alerte {
+  id       String @id @default(uuid())
+  membre   Membre @relation(fields: [membreId], references: [id])
+  membreId String
+
+  type         TypeAlerte
+  destinataire DestinataireAlerte @default(MEMBRE)
+  message      String
+  estLue       Boolean            @default(false)
+  dateEnvoi    DateTime           @default(now())
+
+  @@index([membreId])
+  @@index([type])
+  @@map("alertes")
+}
+
+// Traçabilité de toute action financière/administrative
+model AuditLog {
+  id        String   @id @default(uuid())
+  action    String
+  entite    String
+  entiteId  String
+  auteur    Membre?  @relation(fields: [auteurId], references: [id])
+  auteurId  String?
+  details   Json?
+  createdAt DateTime @default(now())
+
+  @@index([entite, entiteId])
+  @@index([auteurId])
+  @@map("audit_logs")
+}
+
+// Jetons de rafraîchissement pour l'authentification (JWT)
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  membreId  String
+  membre    Membre   @relation(fields: [membreId], references: [id], onDelete: Cascade)
+  isRevoked Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([membreId])
+  @@map("refresh_tokens")
+}
