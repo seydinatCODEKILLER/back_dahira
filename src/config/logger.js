@@ -16,7 +16,7 @@ const baseConfig = {
   // Informations de base à inclure dans chaque log
   base: {
     env: env.NODE_ENV,
-    app: "sos-yoon-api",
+    app: "dahira-api",
   },
 
   // Timestamp automatique
