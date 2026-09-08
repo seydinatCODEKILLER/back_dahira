@@ -23,7 +23,7 @@ export const swaggerOptions = {
         description: "Serveur de développement",
       },
       {
-        url: "https://api.dahira-cotisation.com",
+        url: "https://back-dahira.onrender.com",
         description: "Serveur de production",
       },
     ],
