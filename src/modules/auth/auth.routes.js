@@ -12,6 +12,7 @@ import {
   refreshTokenSchema,
   updateProfileSchema,
   setStatutSchema,
+  changePinSchema,
 } from "./auth.schema.js";
 import { authLimiter, refreshTokenLimiter } from "../../config/rateLimiter.js";
 
@@ -25,7 +26,7 @@ const authController = new AuthController();
  * /api/auth/register:
  *   post:
  *     summary: Inscrire un nouveau membre
- *     description: Réservé à l'Administrateur/Trésorier — l'inscription n'est pas en self-service (cahier des charges §2, §3).
+ *     description: Réservé à l'Administrateur/Trésorier.
  *     tags: [Auth]
  *     security:
  *       - bearerAuth: []
@@ -34,40 +35,26 @@ const authController = new AuthController();
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/MembreCreateRequest'
+ *             type: object
+ *             required: [nom, prenom, telephone, codePin]
+ *             properties:
+ *               nom:
+ *                 type: string
+ *               prenom:
+ *                 type: string
+ *               telephone:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               codePin:
+ *                 type: string
+ *                 description: Code PIN à 4 chiffres
+ *               role:
+ *                 type: string
+ *                 enum: [ADMIN, MEMBRE]
  *     responses:
  *       201:
  *         description: Membre inscrit avec succès
- *         content:
- *           application/json:
- *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/Success'
- *                 - type: object
- *                   properties:
- *                     data:
- *                       type: object
- *                       properties:
- *                         membre:
- *                           $ref: '#/components/schemas/Membre'
- *       400:
- *         description: Données invalides ou mot de passe faible
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       403:
- *         description: Réservé à l'administrateur
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       409:
- *         description: Numéro de téléphone déjà utilisé
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
  */
 router.post(
   "/register",
@@ -81,7 +68,7 @@ router.post(
  * @swagger
  * /api/auth/login:
  *   post:
- *     summary: Connexion avec téléphone et mot de passe
+ *     summary: Connexion avec téléphone et code PIN
  *     tags: [Auth]
  *     security: []
  *     requestBody:
@@ -89,51 +76,25 @@ router.post(
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/LoginRequest'
+ *             type: object
+ *             required: [telephone, codePin]
+ *             properties:
+ *               telephone:
+ *                 type: string
+ *               codePin:
+ *                 type: string
+ *                 description: Code PIN à 4 chiffres
  *     responses:
  *       200:
  *         description: Connexion réussie
- *         content:
- *           application/json:
- *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/Success'
- *                 - type: object
- *                   properties:
- *                     data:
- *                       $ref: '#/components/schemas/AuthResponse'
- *       400:
- *         description: Données invalides
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       401:
- *         description: Identifiants incorrects
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       403:
- *         description: Compte désactivé ou bloqué
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
  */
-router.post(
-  "/login",
-  authLimiter,
-  validate(loginSchema),
-  authController.login,
-);
+router.post("/login", authLimiter, validate(loginSchema), authController.login);
 
 /**
  * @swagger
  * /api/auth/refresh:
  *   post:
  *     summary: Rafraîchir l'access token
- *     description: Retourne un nouvel access token et un nouveau refresh token (rotation). L'ancien refresh token est révoqué.
  *     tags: [Auth]
  *     security: []
  *     requestBody:
@@ -141,31 +102,13 @@ router.post(
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/RefreshRequest'
+ *             type: object
+ *             properties:
+ *               refreshToken:
+ *                 type: string
  *     responses:
  *       200:
  *         description: Token rafraîchi avec succès
- *         content:
- *           application/json:
- *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/Success'
- *                 - type: object
- *                   properties:
- *                     data:
- *                       $ref: '#/components/schemas/RefreshResponse'
- *       400:
- *         description: Refresh token manquant
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       401:
- *         description: Refresh token invalide, révoqué ou expiré
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
  */
 router.post(
   "/refresh",
@@ -179,7 +122,6 @@ router.post(
  * /api/auth/logout:
  *   post:
  *     summary: Déconnexion
- *     description: Révoque le refresh token fourni pour empêcher sa réutilisation.
  *     tags: [Auth]
  *     security: []
  *     requestBody:
@@ -187,20 +129,13 @@ router.post(
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/RefreshRequest'
+ *             type: object
+ *             properties:
+ *               refreshToken:
+ *                 type: string
  *     responses:
  *       200:
  *         description: Déconnexion réussie
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Success'
- *       400:
- *         description: Refresh token manquant
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
  */
 router.post("/logout", validate(refreshTokenSchema), authController.logout);
 
@@ -217,27 +152,6 @@ router.post("/logout", validate(refreshTokenSchema), authController.logout);
  *     responses:
  *       200:
  *         description: Informations du membre récupérées avec succès
- *         content:
- *           application/json:
- *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/Success'
- *                 - type: object
- *                   properties:
- *                     data:
- *                       $ref: '#/components/schemas/Membre'
- *       401:
- *         description: Non authentifié
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       404:
- *         description: Membre non trouvé
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
  */
 router.get("/me", protect(), authController.getCurrentUser);
 
@@ -258,38 +172,13 @@ router.get("/me", protect(), authController.getCurrentUser);
  *             properties:
  *               nom:
  *                 type: string
- *                 minLength: 2
  *               prenom:
  *                 type: string
- *                 minLength: 2
  *               email:
- *                 type: string
- *               avatar:
  *                 type: string
  *     responses:
  *       200:
  *         description: Profil mis à jour avec succès
- *         content:
- *           application/json:
- *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/Success'
- *                 - type: object
- *                   properties:
- *                     data:
- *                       $ref: '#/components/schemas/Membre'
- *       400:
- *         description: Données invalides
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       401:
- *         description: Non authentifié
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
  */
 router.put(
   "/profile",
@@ -297,6 +186,42 @@ router.put(
   sanitizeBody,
   validate(updateProfileSchema),
   authController.updateProfile,
+);
+
+/**
+ * @swagger
+ * /api/auth/change-pin:
+ *   patch:
+ *     summary: Changer le code PIN
+ *     description: Permet à l'utilisateur connecté de mettre à jour son code PIN. Révoque toutes les sessions existantes après modification.
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [ancienCodePin, nouveauCodePin]
+ *             properties:
+ *               ancienCodePin:
+ *                 type: string
+ *                 example: "1234"
+ *               nouveauCodePin:
+ *                 type: string
+ *                 example: "5678"
+ *     responses:
+ *       200:
+ *         description: Code PIN modifié avec succès
+ *       401:
+ *         description: Ancien code PIN incorrect ou non authentifié
+ */
+router.patch(
+  "/change-pin",
+  protect(),
+  validate(changePinSchema),
+  authController.changePin
 );
 
 /**
@@ -310,16 +235,6 @@ router.put(
  *     responses:
  *       200:
  *         description: Tous les refresh tokens ont été révoqués
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Success'
- *       401:
- *         description: Non authentifié
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
  */
 router.post("/revoke-all-tokens", protect(), authController.revokeAllTokens);
 
@@ -328,7 +243,6 @@ router.post("/revoke-all-tokens", protect(), authController.revokeAllTokens);
  * /api/auth/set-statut:
  *   patch:
  *     summary: Activer, désactiver ou bloquer un membre (Admin seulement)
- *     description: Tout statut différent de ACTIF révoque immédiatement toutes les sessions actives du membre.
  *     tags: [Auth]
  *     security:
  *       - bearerAuth: []
@@ -348,28 +262,6 @@ router.post("/revoke-all-tokens", protect(), authController.revokeAllTokens);
  *     responses:
  *       200:
  *         description: Statut du membre mis à jour avec succès
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Success'
- *       400:
- *         description: Données invalides
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       401:
- *         description: Non authentifié
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       403:
- *         description: Permissions insuffisantes
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
  */
 router.patch(
   "/set-statut",

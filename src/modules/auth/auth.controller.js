@@ -3,7 +3,6 @@ import { AuthService } from "./auth.service.js";
 const authService = new AuthService();
 
 export class AuthController {
-  // Réservé à l'admin — inscription d'un membre
   async register(req, res, next) {
     try {
       const result = await authService.register(req.validated.body);
@@ -19,12 +18,30 @@ export class AuthController {
 
   async login(req, res, next) {
     try {
-      const { telephone, password } = req.validated.body;
-      const result = await authService.login(telephone, password);
+      const { telephone, codePin } = req.validated.body;
+      const result = await authService.login(telephone, codePin);
       res.status(200).json({
         success: true,
         message: "Connexion réussie",
         data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // ─── NOUVEAU : Changer le code PIN ───────────────────────────
+  async changePin(req, res, next) {
+    try {
+      const { ancienCodePin, nouveauCodePin } = req.validated.body;
+      const result = await authService.changePin(
+        req.user.id,
+        ancienCodePin,
+        nouveauCodePin
+      );
+      res.status(200).json({
+        success: true,
+        message: result.message,
       });
     } catch (error) {
       next(error);
@@ -98,7 +115,6 @@ export class AuthController {
     }
   }
 
-  // Réservé à l'admin — activer / désactiver / bloquer un membre
   async setStatut(req, res, next) {
     try {
       const { membreId, statut } = req.validated.body;

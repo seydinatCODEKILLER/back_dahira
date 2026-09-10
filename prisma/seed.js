@@ -1,9 +1,8 @@
 import { prisma } from "../src/config/database.js";
-import { hashPassword } from "../src/shared/utils/hasher.js";
 
 // ─── Paramètres de l'admin (surchargeables via .env) ───────────
 const ADMIN_TELEPHONE = process.env.SEED_ADMIN_TELEPHONE || "+221770000000";
-const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD || "Admin@1234";
+const ADMIN_PIN = process.env.SEED_ADMIN_PIN || "1234"; // Code PIN par défaut à 4 chiffres
 const ADMIN_NOM = process.env.SEED_ADMIN_NOM || "Admin";
 const ADMIN_PRENOM = process.env.SEED_ADMIN_PRENOM || "Dahira";
 const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL || null;
@@ -19,8 +18,6 @@ async function seedAdmin() {
     return existing;
   }
 
-  const hashedPassword = await hashPassword(ADMIN_PASSWORD);
-
   const total = await prisma.membre.count();
   const matricule = `DHR-${new Date().getFullYear()}-${String(total + 1).padStart(4, "0")}`;
 
@@ -31,17 +28,17 @@ async function seedAdmin() {
       prenom: ADMIN_PRENOM,
       telephone: ADMIN_TELEPHONE,
       email: ADMIN_EMAIL,
-      motDePasse: hashedPassword,
+      codePin: ADMIN_PIN, // Stocké en clair (4 chiffres)
       role: "ADMIN",
       statut: "ACTIF",
     },
   });
 
   console.log("✅ Compte administrateur créé :");
-  console.log(`   Matricule    : ${admin.matricule}`);
-  console.log(`   Téléphone    : ${admin.telephone}`);
-  console.log(`   Mot de passe : ${ADMIN_PASSWORD}`);
-  console.log("   ⚠️  Changez ce mot de passe dès la première connexion.\n");
+  console.log(`   Matricule  : ${admin.matricule}`);
+  console.log(`   Téléphone  : ${admin.telephone}`);
+  console.log(`   Code PIN   : ${ADMIN_PIN}`);
+  console.log("   ⚠️  Changez ce code PIN dès la première connexion.\n");
 
   return admin;
 }

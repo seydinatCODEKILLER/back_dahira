@@ -1,13 +1,16 @@
 import { z } from "zod";
 
 const TELEPHONE_REGEX = /^\+?[0-9]{9,15}$/;
+const PIN_REGEX = /^\d{4}$/; // 4 chiffres exactement
 
 export const loginSchema = z.object({
   body: z.object({
     telephone: z
       .string()
       .regex(TELEPHONE_REGEX, "Numéro de téléphone invalide"),
-    password: z.string().min(1, "Le mot de passe est requis"),
+    codePin: z
+      .string()
+      .regex(PIN_REGEX, "Le code PIN doit contenir exactement 4 chiffres"),
   }),
 });
 
@@ -20,14 +23,22 @@ export const registerSchema = z.object({
       .string()
       .regex(TELEPHONE_REGEX, "Numéro de téléphone invalide"),
     email: z.string().email("Adresse email invalide").optional(),
-    password: z
+    codePin: z
       .string()
-      .min(8, "Le mot de passe doit contenir au moins 8 caractères")
-      .regex(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-        "Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre",
-      ),
+      .regex(PIN_REGEX, "Le code PIN doit contenir exactement 4 chiffres"),
     role: z.enum(["ADMIN", "MEMBRE"]).optional(),
+  }),
+});
+
+// ─── NOUVEAU : Schéma pour changer de code PIN ───
+export const changePinSchema = z.object({
+  body: z.object({
+    ancienCodePin: z
+      .string()
+      .regex(PIN_REGEX, "L'ancien code PIN est invalide"),
+    nouveauCodePin: z
+      .string()
+      .regex(PIN_REGEX, "Le nouveau code PIN doit contenir exactement 4 chiffres"),
   }),
 });
 

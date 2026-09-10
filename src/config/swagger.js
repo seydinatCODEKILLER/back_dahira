@@ -7,7 +7,7 @@ export const swaggerOptions = {
       title: "Dahira Cotisation API",
       version: "1.0.0",
       description:
-        "API de gestion des cotisations journalières d'une dahira — suivi des versements, des avances, des soldes et des alertes de régularisation pour les membres et le trésorier.",
+        "API de gestion des cotisations journalières d'un dahira — suivi des versements, des avances, des soldes et des alertes de régularisation pour les membres et le trésorier.",
       contact: {
         name: "Support Dahira Cotisation",
         email: "support@dahira-cotisation.com",
@@ -107,7 +107,7 @@ export const swaggerOptions = {
         },
         MembreCreateRequest: {
           type: "object",
-          required: ["nom", "prenom", "telephone", "password"],
+          required: ["nom", "prenom", "telephone", "codePin"],
           properties: {
             nom: { type: "string", example: "Ndiaye" },
             prenom: { type: "string", example: "Fatou" },
@@ -117,22 +117,22 @@ export const swaggerOptions = {
               nullable: true,
               example: "fatou.ndiaye@email.com",
             },
-            password: {
+            codePin: {
               type: "string",
-              format: "password",
-              example: "MotDePasse123!",
+              example: "1234",
+              description: "Code PIN strictement composé de 4 chiffres",
             },
           },
         },
         LoginRequest: {
           type: "object",
-          required: ["telephone", "password"],
+          required: ["telephone", "codePin"],
           properties: {
             telephone: { type: "string", example: "+221771234567" },
-            password: {
+            codePin: {
               type: "string",
-              format: "password",
-              example: "MotDePasse123!",
+              example: "1234",
+              description: "Code PIN à 4 chiffres",
             },
           },
         },

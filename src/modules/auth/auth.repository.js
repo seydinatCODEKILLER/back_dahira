@@ -58,9 +58,17 @@ export class AuthRepository extends BaseRepository {
     });
   }
 
+  // ─── NOUVEAU : Mettre à jour le code PIN ───
+  async updateCodePin(membreId, nouveauCodePin) {
+    return prisma.membre.update({
+      where: { id: membreId },
+      data: { codePin: nouveauCodePin },
+      select: MEMBRE_SAFE_SELECT,
+    });
+  }
+
   async updateStatut(membreId, statut) {
     const data = { statut };
-    // On trace la date de désactivation dès qu'on quitte le statut ACTIF
     if (statut === "ACTIF") {
       data.dateDesactivation = null;
     } else if (statut === "INACTIF") {

@@ -1,6 +1,5 @@
 import { AuthRepository } from "./auth.repository.js";
 import { JwtService } from "../../config/jwt.js";
-import { hashPassword, comparePassword } from "../../shared/utils/hasher.js";
 import {
   UnauthorizedError,
   ForbiddenError,
@@ -10,10 +9,6 @@ import {
 
 const authRepo = new AuthRepository();
 const jwtService = new JwtService();
-
-// Hash fictif pour neutraliser le timing attack
-const DUMMY_HASH =
-  "$2b$10$abcdefghijklmnopqrstuuVVmqJZOdEJ.JkpjBnBnNmS6RsOi8jCy";
 
 const REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -39,7 +34,6 @@ const createTokens = async (membre) => {
   return { accessToken, refreshToken };
 };
 
-// Matricule séquentiel par année, ex: DHR-2026-0042
 const generateMatricule = async () => {
   const year = new Date().getFullYear();
   const total = await authRepo.countMembres();
@@ -51,10 +45,8 @@ const generateMatricule = async () => {
 
 export class AuthService {
   // ─── Inscription d'un membre ─────────────────────────────────
-  // Réservée à l'Administrateur/Trésorier (cahier des charges §2, §3
-  // "Gestion des Membres" — pas de self-service).
   async register(data) {
-    const { nom, prenom, email, password, telephone, role } = data;
+    const { nom, prenom, email, codePin, telephone, role } = data;
 
     const existingTelephone = await authRepo.findByTelephone(telephone);
     if (existingTelephone) {
@@ -63,7 +55,6 @@ export class AuthService {
       );
     }
 
-    const hashedPassword = await hashPassword(password);
     const matricule = await generateMatricule();
 
     const membre = await authRepo.createMembre({
@@ -72,7 +63,7 @@ export class AuthService {
       prenom,
       email: email || null,
       telephone,
-      motDePasse: hashedPassword,
+      codePin,
       role: role || "MEMBRE",
     });
 
@@ -80,26 +71,20 @@ export class AuthService {
   }
 
   // ─── Connexion ────────────────────────────────────────────────
-  // Le membre se connecte avec son numéro de téléphone.
-  async login(telephone, password) {
+  async login(telephone, codePin) {
     const membre = await authRepo.findByTelephone(telephone);
 
-    // Timing attack neutralisé — toujours appeler comparePassword
     if (!membre) {
-      await comparePassword(password, DUMMY_HASH);
-      throw new UnauthorizedError("Téléphone ou mot de passe incorrect");
+      throw new UnauthorizedError("Téléphone ou code PIN incorrect");
     }
 
-    const isValid = await comparePassword(password, membre.motDePasse);
-    if (!isValid) {
-      throw new UnauthorizedError("Téléphone ou mot de passe incorrect");
+    if (membre.codePin !== codePin) {
+      throw new UnauthorizedError("Téléphone ou code PIN incorrect");
     }
 
     if (membre.statut === "INACTIF") {
       throw new ForbiddenError("Votre compte a été désactivé.");
     }
-    // BLOQUE : connexion autorisée — la restriction porte sur les nouvelles
-    // avances (module versements), pas sur l'accès au compte.
 
     const [{ accessToken, refreshToken }] = await Promise.all([
       createTokens(membre),
@@ -115,6 +100,27 @@ export class AuthService {
     };
   }
 
+  // ─── NOUVEAU : Changer le code PIN ───────────────────────────
+  async changePin(membreId, ancienCodePin, nouveauCodePin) {
+    // On récupère le membre avec son codePin actuel (findById n'est pas "safe")
+    const membre = await authRepo.findById(membreId);
+    if (!membre) throw new NotFoundError("Membre");
+
+    // Vérification de l'ancien code
+    if (membre.codePin !== ancienCodePin) {
+      throw new UnauthorizedError("L'ancien code PIN est incorrect.");
+    }
+
+    // Mise à jour avec le nouveau code
+    await authRepo.updateCodePin(membreId, nouveauCodePin);
+
+    // Optionnel mais recommandé : révoquer tous les refresh tokens existants
+    // pour forcer l'utilisateur à se reconnecter sur tous ses appareils avec le nouveau PIN
+    await authRepo.revokeAllMembreTokens(membreId);
+
+    return { message: "Code PIN modifié avec succès. Veuillez vous reconnecter." };
+  }
+
   // ─── Profil courant ───────────────────────────────────────────
   async getCurrentUser(membreId) {
     const membre = await authRepo.findByIdSafe(membreId);
@@ -123,8 +129,6 @@ export class AuthService {
   }
 
   // ─── Mise à jour du profil ────────────────────────────────────
-  // Le membre ne peut modifier que ses infos de contact —
-  // matricule, rôle et statut restent réservés à l'admin.
   async updateProfile(membreId, data) {
     const membre = await authRepo.findById(membreId);
     if (!membre) throw new NotFoundError("Membre");
@@ -145,7 +149,6 @@ export class AuthService {
     }
 
     if (stored.isRevoked) {
-      // Détection réutilisation — révoquer tous les tokens
       await authRepo.revokeAllMembreTokens(stored.membreId);
       throw new UnauthorizedError(
         "Refresh token révoqué — tous vos appareils ont été déconnectés",
@@ -161,7 +164,6 @@ export class AuthService {
       throw new ForbiddenError("Compte désactivé");
     }
 
-    // Rotation : révoquer l'ancien, créer un nouveau
     const payload = buildMembrePayload(membre);
     const newAccessToken = jwtService.sign(payload);
     const newRefreshToken = jwtService.signRefresh(payload);
@@ -198,17 +200,13 @@ export class AuthService {
     return { message: "Tous les refresh tokens ont été révoqués" };
   }
 
-  // ─── Activer / désactiver / bloquer un compte (réservé à l'admin) ─
-  // Le blocage automatique pour retard critique (règle des 2 jours)
-  // sera déclenché par le futur module `soldes`/`alertes` en appelant
-  // ce même repository — cette méthode reste la voie manuelle admin.
+  // ─── Activer / désactiver / bloquer un compte ─────────────────
   async setStatut(membreId, statut) {
     const membre = await authRepo.findById(membreId);
     if (!membre) throw new NotFoundError("Membre");
 
     const updated = await authRepo.updateStatut(membreId, statut);
 
-    // Si le compte n'est plus ACTIF, on invalide immédiatement ses sessions
     if (statut !== "ACTIF") {
       await authRepo.revokeAllMembreTokens(membreId);
     }

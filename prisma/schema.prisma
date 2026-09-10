@@ -69,7 +69,7 @@ model Membre {
   telephone  String       @unique
   email      String?      @unique
   avatar     String?
-  motDePasse String
+  codePin    String       // <-- Changé ici (4 chiffres)
   role       Role         @default(MEMBRE)
   statut     StatutMembre @default(ACTIF)
 
