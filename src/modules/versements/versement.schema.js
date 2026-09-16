@@ -9,6 +9,16 @@ export const declarerVersementSchema = z.object({
   }),
 });
 
+export const declarerVersementAdminSchema = z.object({
+  body: z.object({
+    membreId: z.string().uuid("Identifiant de membre invalide"),
+    montant: z
+      .number({ required_error: "Le montant est requis" })
+      .int("Le montant doit être un nombre entier")
+      .positive("Le montant doit être positif"),
+  }),
+});
+
 export const versementIdParamSchema = z.object({
   params: z.object({
     id: z.string().uuid("Identifiant de versement invalide"),

@@ -10,6 +10,7 @@ import {
   versementIdParamSchema,
   versementsQuerySchema,
   versementsAdminQuerySchema,
+  declarerVersementAdminSchema,
 } from "./versement.schema.js";
 import { crudLimiter } from "../../config/rateLimiter.js";
 
@@ -70,6 +71,42 @@ router.post(
   crudLimiter,
   validate(declarerVersementSchema),
   versementController.declarer,
+);
+
+/**
+ * @swagger
+ * /api/versements/admin:
+ *   post:
+ *     summary: Déclarer et valider un versement au nom d'un membre (Admin)
+ *     description: Réservé aux cas où le membre est indisponible (pas de connexion, paiement en espèces recueilli directement). Le versement est créé directement au statut VALIDE.
+ *     tags: [Versements]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [membreId, montant]
+ *             properties:
+ *               membreId:
+ *                 type: string
+ *               montant:
+ *                 type: integer
+ *     responses:
+ *       201:
+ *         description: Versement créé et validé
+ *       403:
+ *         description: Réservé à l'administrateur
+ */
+router.post(
+  "/admin",
+  protect(),
+  restrictTo("ADMIN"),
+  crudLimiter,
+  validate(declarerVersementAdminSchema),
+  versementController.declarerPourMembre,
 );
 
 /**

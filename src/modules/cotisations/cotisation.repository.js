@@ -17,7 +17,7 @@ export class CotisationRepository extends BaseRepository {
     });
 
     if (membresActifs.length === 0) {
-      return { count: 0 };
+      return { count: 0, membresCouvertsIds: [] };
     }
 
     // Un membre peut avoir payé une avance qui couvre cette date avant même
@@ -46,7 +46,16 @@ export class CotisationRepository extends BaseRepository {
       };
     });
 
-    return prisma.cotisation.createMany({ data, skipDuplicates: true });
+    const result = await prisma.cotisation.createMany({ data, skipDuplicates: true });
+
+    return {
+      count: result.count,
+      // Membres dont la cotisation du jour est couverte par une avance déjà
+      // validée — leur Solde (cache) doit être rafraîchi par le service appelant,
+      // sans quoi il resterait figé jusqu'au prochain événement (versement validé
+      // ou recalcul global hebdomadaire).
+      membresCouvertsIds: [...versementParMembre.keys()],
+    };
   }
 
   // ─── Détection des retards ───────────────────────────────────────

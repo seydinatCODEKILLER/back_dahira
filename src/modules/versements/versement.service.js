@@ -34,7 +34,9 @@ const addDays = (date, days) => {
 // principale si l'écriture d'audit échoue (juste logué).
 const tracer = (action, entiteId, auteurId, details) =>
   prisma.auditLog
-    .create({ data: { action, entite: "Versement", entiteId, auteurId, details } })
+    .create({
+      data: { action, entite: "Versement", entiteId, auteurId, details },
+    })
     .catch((err) => logger.logError(err, { context: "audit_log_versement" }));
 
 export class VersementService {
@@ -63,7 +65,8 @@ export class VersementService {
     });
     if (!membre) throw new NotFoundError("Membre");
 
-    const periodeDebut = await versementRepo.getProchaineDateDisponible(membreId);
+    const periodeDebut =
+      await versementRepo.getProchaineDateDisponible(membreId);
     const periodeFin = addDays(periodeDebut, nombreJours - 1);
 
     // Règle de gestion : un membre BLOQUE (retard critique) peut toujours
@@ -113,7 +116,9 @@ export class VersementService {
     if (!versement) throw new NotFoundError("Versement");
 
     if (requester.role !== "ADMIN" && versement.membreId !== requester.id) {
-      throw new ForbiddenError("Vous ne pouvez consulter que vos propres versements");
+      throw new ForbiddenError(
+        "Vous ne pouvez consulter que vos propres versements",
+      );
     }
 
     return versement;
@@ -143,7 +148,11 @@ export class VersementService {
       }),
       prisma.versement.update({
         where: { id: versementId },
-        data: { statut: "VALIDE", valideParId: adminId, dateValidation: new Date() },
+        data: {
+          statut: "VALIDE",
+          valideParId: adminId,
+          dateValidation: new Date(),
+        },
       }),
     ]);
 
@@ -180,5 +189,78 @@ export class VersementService {
     });
 
     return updated;
+  }
+
+  // ─── Déclaration + validation directe par l'admin ────────────────
+  async declarerEtValiderPourMembre(adminId, membreId, montant) {
+    const config = await getConfigOrThrow();
+
+    if (montant <= 0 || montant % config.montantCotisationJournaliere !== 0) {
+      throw new BadRequestError(
+        `Le montant doit être un multiple positif de ${config.montantCotisationJournaliere} FCFA`,
+      );
+    }
+
+    const nombreJours = montant / config.montantCotisationJournaliere;
+
+    if (nombreJours > config.seuilAvanceJoursMax) {
+      throw new ForbiddenError(
+        `Impossible d'avancer plus de ${config.seuilAvanceJoursMax} jours en une seule fois`,
+      );
+    }
+
+    const membre = await prisma.membre.findUnique({
+      where: { id: membreId },
+      select: { statut: true },
+    });
+    if (!membre) throw new NotFoundError("Membre");
+
+    const periodeDebut = await versementRepo.getProchaineDateDisponible(membreId);
+    const periodeFin = addDays(periodeDebut, nombreJours - 1);
+
+    if (membre.statut === "BLOQUE") {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (periodeFin > today) {
+        throw new ForbiddenError(
+          "Compte bloqué pour retard critique : ce versement dépasse la simple régularisation. Réduisez le montant pour ne couvrir que les jours déjà dus.",
+        );
+      }
+    }
+
+    // ↓↓↓ C'EST ICI QUE VA LE BLOC ↓↓↓
+    const versement = await prisma.$transaction(async (tx) => {
+      const v = await tx.versement.create({
+        data: {
+          membreId, montant, nombreJours, periodeDebut, periodeFin,
+          statut: "VALIDE", valideParId: adminId, dateValidation: new Date(),
+        },
+      });
+
+      await tx.cotisation.updateMany({
+        where: {
+          membreId,
+          date: { gte: periodeDebut, lte: periodeFin },
+          statut: { in: ["EN_ATTENTE", "RETARD"] },
+        },
+        data: { statut: "PAYE", versementId: v.id },
+      });
+
+      return v;
+    });
+    // ↑↑↑ FIN DU BLOC ↑↑↑
+
+    await tracer("VERSEMENT_DECLARE_ET_VALIDE_PAR_ADMIN", versement.id, adminId, {
+      membreId,
+      montant,
+      nombreJours,
+      periodeDebut,
+      periodeFin,
+      raison: "Saisi par l'administrateur pour le compte du membre",
+    });
+
+    await soldeService.recalculerPourMembre(membreId);
+
+    return versement;
   }
 }

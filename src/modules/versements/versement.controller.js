@@ -19,6 +19,24 @@ export class VersementController {
     }
   }
 
+  async declarerPourMembre(req, res, next) {
+    try {
+      const { membreId, montant } = req.validated.body;
+      const versement = await versementService.declarerEtValiderPourMembre(
+        req.user.id,
+        membreId,
+        montant,
+      );
+      res.status(201).json({
+        success: true,
+        message: "Versement saisi et validé directement par l'administrateur",
+        data: versement,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async mesVersements(req, res, next) {
     try {
       const { statut, page, limit } = req.validated.query;

@@ -35,6 +35,18 @@ export class CotisationService {
       config.montantCotisationJournaliere,
     );
 
+    // Les membres dont la cotisation du jour vient de naître PAYE (grâce à
+    // une avance déjà validée) doivent voir leur Solde (cache) rafraîchi
+    // immédiatement — sinon il resterait figé sur son ancienne valeur
+    // jusqu'au prochain versement validé ou au recalcul global du dimanche.
+    if (result.membresCouvertsIds.length > 0) {
+      await Promise.all(
+        result.membresCouvertsIds.map((id) =>
+          soldeService.recalculerPourMembre(id),
+        ),
+      );
+    }
+
     return {
       message: `${result.count} cotisation(s) générée(s) pour le ${today.toISOString().slice(0, 10)}`,
       count: result.count,
