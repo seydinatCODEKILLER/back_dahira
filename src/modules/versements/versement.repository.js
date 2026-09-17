@@ -15,26 +15,31 @@ export class VersementRepository extends BaseRepository {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const [dernierJourPaye, dernierVersementReserve] = await Promise.all([
-      prisma.cotisation.findFirst({
-        where: { membreId, statut: "PAYE" },
-        orderBy: { date: "desc" },
-        select: { date: true },
-      }),
-      prisma.versement.findFirst({
-        where: { membreId, statut: { in: ["EN_ATTENTE", "VALIDE"] } },
-        orderBy: { periodeFin: "desc" },
-        select: { periodeFin: true },
-      }),
-    ]);
+    const [premiereCotisationImpayee, dernierVersementReserve] =
+      await Promise.all([
+        // Point de départ réel de la dette : la plus ancienne cotisation encore
+        // due, pas encore rattachée à un versement.
+        prisma.cotisation.findFirst({
+          where: {
+            membreId,
+            statut: { in: ["EN_ATTENTE", "RETARD"] },
+            versementId: null,
+          },
+          orderBy: { date: "asc" },
+          select: { date: true },
+        }),
+        prisma.versement.findFirst({
+          where: { membreId, statut: { in: ["EN_ATTENTE", "VALIDE"] } },
+          orderBy: { periodeFin: "desc" },
+          select: { periodeFin: true },
+        }),
+      ]);
 
-    const candidats = [today];
-
-    if (dernierJourPaye) {
-      const lendemain = new Date(dernierJourPaye.date);
-      lendemain.setDate(lendemain.getDate() + 1);
-      candidats.push(lendemain);
-    }
+    // Si aucune dette en attente, on repart d'aujourd'hui (cas d'une avance
+    // pure, membre totalement à jour).
+    const candidats = [
+      premiereCotisationImpayee ? premiereCotisationImpayee.date : today,
+    ];
 
     if (dernierVersementReserve) {
       const lendemain = new Date(dernierVersementReserve.periodeFin);
