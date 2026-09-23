@@ -70,4 +70,26 @@ export class SoldeController {
       next(error);
     }
   }
+
+    // ─── Avance explicite ─────────────────────────────────────────────
+
+  async monAvance(req, res, next) {
+    try {
+      const resultat = await soldeService.getStatutAvance(req.user.id);
+      res.status(200).json({ success: true, data: resultat });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async avanceDuMembre(req, res, next) {
+    try {
+      const resultat = await soldeService.getStatutAvance(
+        req.validated.params.membreId,
+      );
+      res.status(200).json({ success: true, data: resultat });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

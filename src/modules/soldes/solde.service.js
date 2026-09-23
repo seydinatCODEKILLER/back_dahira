@@ -111,4 +111,28 @@ export class SoldeService {
   async listAll(filters) {
     return soldeRepo.findManyFiltered(filters);
   }
+
+    // ─── Avance explicite (jours + période) ──────────────────────────
+  // Renvoie l'état d'avance d'un membre : combien de jours d'avance,
+  // et sur quelle période exacte (du lendemain d'aujourd'hui jusqu'au
+  // dernier jour payé). Retourne des valeurs à zéro/null si le membre
+  // n'est pas en avance (à jour, en retard, ou bloqué).
+  async getStatutAvance(membreId) {
+    const solde = await this.getForMembre(membreId);
+    const today = toDateOnly();
+
+    const joursAvance = solde.soldeJours > 0 ? solde.soldeJours : 0;
+
+    let dateDebutAvance = null;
+    let dateFinAvance = null;
+
+    if (joursAvance > 0) {
+      const debut = new Date(today);
+      debut.setDate(debut.getDate() + 1);
+      dateDebutAvance = debut;
+      dateFinAvance = solde.dernierJourPaye;
+    }
+
+    return { joursAvance, dateDebutAvance, dateFinAvance };
+  }
 }

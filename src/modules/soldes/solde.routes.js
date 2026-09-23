@@ -42,6 +42,46 @@ router.get("/me", protect(), soldeController.monSolde);
 
 /**
  * @swagger
+ * /api/soldes/me/avance:
+ *   get:
+ *     summary: Mon avance (jours d'avance restants et période couverte)
+ *     tags: [Soldes]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Avance du membre connecté
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/Success'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         joursAvance:
+ *                           type: integer
+ *                         dateDebutAvance:
+ *                           type: string
+ *                           format: date-time
+ *                           nullable: true
+ *                         dateFinAvance:
+ *                           type: string
+ *                           format: date-time
+ *                           nullable: true
+ *       401:
+ *         description: Non authentifié
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get("/me/avance", protect(), soldeController.monAvance);
+
+/**
+ * @swagger
  * /api/soldes:
  *   get:
  *     summary: Vue d'ensemble des soldes (Admin/Trésorier)
@@ -138,6 +178,65 @@ router.get(
   restrictTo("ADMIN"),
   validate(soldeMembreParamSchema),
   soldeController.soldeDuMembre,
+);
+
+/**
+ * @swagger
+ * /api/soldes/membre/{membreId}/avance:
+ *   get:
+ *     summary: Avance d'un membre (Admin/Trésorier)
+ *     description: Nombre de jours d'avance restants, et la période exacte qu'ils couvrent (du lendemain d'aujourd'hui jusqu'au dernier jour payé).
+ *     tags: [Soldes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: membreId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Avance du membre
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/Success'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         joursAvance:
+ *                           type: integer
+ *                         dateDebutAvance:
+ *                           type: string
+ *                           format: date-time
+ *                           nullable: true
+ *                         dateFinAvance:
+ *                           type: string
+ *                           format: date-time
+ *                           nullable: true
+ *       401:
+ *         description: Non authentifié
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Réservé à l'administrateur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get(
+  "/membre/:membreId/avance",
+  protect(),
+  restrictTo("ADMIN"),
+  validate(soldeMembreParamSchema),
+  soldeController.avanceDuMembre,
 );
 
 // ─── Déclencheurs manuels (en attendant le module `jobs`) ────────
