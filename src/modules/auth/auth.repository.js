@@ -11,6 +11,7 @@ const MEMBRE_SAFE_SELECT = {
   avatar: true,
   role: true,
   statut: true,
+  doitChangerPin: true,  // ← NOUVEAU
   dateInscription: true,
   createdAt: true,
   updatedAt: true,
@@ -21,8 +22,6 @@ export class AuthRepository extends BaseRepository {
   constructor() {
     super(prisma.membre);
   }
-
-  // ─── Membres ──────────────────────────────────────────────────
 
   async findByTelephone(telephone) {
     return prisma.membre.findUnique({ where: { telephone } });
@@ -46,6 +45,7 @@ export class AuthRepository extends BaseRepository {
   async createMembre(data) {
     return prisma.membre.create({
       data,
+      // doitChangerPin: true est appliqué automatiquement par le défaut Prisma
       select: MEMBRE_SAFE_SELECT,
     });
   }
@@ -58,11 +58,12 @@ export class AuthRepository extends BaseRepository {
     });
   }
 
-  // ─── NOUVEAU : Mettre à jour le code PIN ───
+  // ─── Mettre à jour le code PIN ───
+  // Le changement de PIN lève systématiquement l'obligation.
   async updateCodePin(membreId, nouveauCodePin) {
     return prisma.membre.update({
       where: { id: membreId },
-      data: { codePin: nouveauCodePin },
+      data: { codePin: nouveauCodePin, doitChangerPin: false },
       select: MEMBRE_SAFE_SELECT,
     });
   }
@@ -88,8 +89,6 @@ export class AuthRepository extends BaseRepository {
       data: { lastLoginAt: new Date() },
     });
   }
-
-  // ─── Refresh Tokens ───────────────────────────────────────────
 
   async createRefreshToken(data) {
     return prisma.refreshToken.create({ data });

@@ -39,3 +39,9 @@ export class ConflictError extends AppError {
     super(msg, 409, "CONFLICT");
   }
 }
+
+export class PinChangeRequiredError extends AppError {
+  constructor(msg = "Vous devez changer votre code PIN avant de continuer.") {
+    super(msg, 403, "PIN_CHANGE_REQUIRED");
+  }
+}

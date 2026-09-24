@@ -153,7 +153,7 @@ router.post("/logout", validate(refreshTokenSchema), authController.logout);
  *       200:
  *         description: Informations du membre récupérées avec succès
  */
-router.get("/me", protect(), authController.getCurrentUser);
+router.get("/me", protect({ allowPinChangeRequired: true }), authController.getCurrentUser);
 
 /**
  * @swagger
@@ -219,7 +219,7 @@ router.put(
  */
 router.patch(
   "/change-pin",
-  protect(),
+  protect({ allowPinChangeRequired: true }),
   validate(changePinSchema),
   authController.changePin
 );
@@ -236,7 +236,7 @@ router.patch(
  *       200:
  *         description: Tous les refresh tokens ont été révoqués
  */
-router.post("/revoke-all-tokens", protect(), authController.revokeAllTokens);
+router.post("/revoke-all-tokens", protect({ allowPinChangeRequired: true }), authController.revokeAllTokens);
 
 /**
  * @swagger

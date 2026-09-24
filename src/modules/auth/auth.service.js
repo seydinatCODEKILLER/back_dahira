@@ -41,36 +41,34 @@ const generateMatricule = async () => {
   return `DHR-${year}-${sequence}`;
 };
 
-// ─── Service ──────────────────────────────────────────────────
-
 export class AuthService {
-  // ─── Inscription d'un membre ─────────────────────────────────
-  async register(data) {
-    const { nom, prenom, email, codePin, telephone, role } = data;
+async register(data) {
+  const { nom, prenom, email, codePin, telephone, role } = data;
 
-    const existingTelephone = await authRepo.findByTelephone(telephone);
-    if (existingTelephone) {
-      throw new ConflictError(
-        "Un membre avec ce numéro de téléphone existe déjà",
-      );
-    }
-
-    const matricule = await generateMatricule();
-
-    const membre = await authRepo.createMembre({
-      matricule,
-      nom,
-      prenom,
-      email: email || null,
-      telephone,
-      codePin,
-      role: role || "MEMBRE",
-    });
-
-    return { membre };
+  const existingTelephone = await authRepo.findByTelephone(telephone);
+  if (existingTelephone) {
+    throw new ConflictError(
+      "Un membre avec ce numéro de téléphone existe déjà",
+    );
   }
 
-  // ─── Connexion ────────────────────────────────────────────────
+  const matricule = await generateMatricule();
+  const roleFinal = role || "MEMBRE";
+
+  const membre = await authRepo.createMembre({
+    matricule,
+    nom,
+    prenom,
+    email: email || null,
+    telephone,
+    codePin,
+    role: roleFinal,
+    doitChangerPin: roleFinal !== "ADMIN",
+  });
+
+  return { membre };
+}
+
   async login(telephone, codePin) {
     const membre = await authRepo.findByTelephone(telephone);
 
@@ -100,35 +98,38 @@ export class AuthService {
     };
   }
 
-  // ─── NOUVEAU : Changer le code PIN ───────────────────────────
+  // ─── Changer le code PIN ───────────────────────────────────────
   async changePin(membreId, ancienCodePin, nouveauCodePin) {
-    // On récupère le membre avec son codePin actuel (findById n'est pas "safe")
     const membre = await authRepo.findById(membreId);
     if (!membre) throw new NotFoundError("Membre");
 
-    // Vérification de l'ancien code
     if (membre.codePin !== ancienCodePin) {
       throw new UnauthorizedError("L'ancien code PIN est incorrect.");
     }
 
-    // Mise à jour avec le nouveau code
+    if (ancienCodePin === nouveauCodePin) {
+      throw new ConflictError(
+        "Le nouveau code PIN doit être différent de l'ancien.",
+      );
+    }
+
     await authRepo.updateCodePin(membreId, nouveauCodePin);
 
-    // Optionnel mais recommandé : révoquer tous les refresh tokens existants
-    // pour forcer l'utilisateur à se reconnecter sur tous ses appareils avec le nouveau PIN
+    // Révoque toutes les sessions : le membre doit se reconnecter pour
+    // obtenir un nouveau JWT avec doitChangerPin: false.
     await authRepo.revokeAllMembreTokens(membreId);
 
-    return { message: "Code PIN modifié avec succès. Veuillez vous reconnecter." };
+    return {
+      message: "Code PIN modifié avec succès. Veuillez vous reconnecter.",
+    };
   }
 
-  // ─── Profil courant ───────────────────────────────────────────
   async getCurrentUser(membreId) {
     const membre = await authRepo.findByIdSafe(membreId);
     if (!membre) throw new NotFoundError("Membre");
     return membre;
   }
 
-  // ─── Mise à jour du profil ────────────────────────────────────
   async updateProfile(membreId, data) {
     const membre = await authRepo.findById(membreId);
     if (!membre) throw new NotFoundError("Membre");
@@ -140,7 +141,6 @@ export class AuthService {
     });
   }
 
-  // ─── Refresh token ────────────────────────────────────────────
   async refreshToken(token) {
     const stored = await authRepo.findRefreshToken(token);
 
@@ -186,7 +186,6 @@ export class AuthService {
     };
   }
 
-  // ─── Déconnexion ──────────────────────────────────────────────
   async logout(token) {
     if (token) {
       await authRepo.revokeRefreshToken(token).catch(() => {});
@@ -194,13 +193,11 @@ export class AuthService {
     return { message: "Déconnexion réussie" };
   }
 
-  // ─── Révoquer tous les tokens ─────────────────────────────────
   async revokeAllTokens(membreId) {
     await authRepo.revokeAllMembreTokens(membreId);
     return { message: "Tous les refresh tokens ont été révoqués" };
   }
 
-  // ─── Activer / désactiver / bloquer un compte ─────────────────
   async setStatut(membreId, statut) {
     const membre = await authRepo.findById(membreId);
     if (!membre) throw new NotFoundError("Membre");

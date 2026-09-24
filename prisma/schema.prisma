@@ -72,6 +72,7 @@ model Membre {
   codePin    String       // <-- Changé ici (4 chiffres)
   role       Role         @default(MEMBRE)
   statut     StatutMembre @default(ACTIF)
+  doitChangerPin Boolean @default(true)
 
   dateInscription   DateTime  @default(now())
   dateDesactivation DateTime?
