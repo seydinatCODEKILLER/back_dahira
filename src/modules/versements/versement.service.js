@@ -102,22 +102,12 @@ export class VersementService {
 
     const membre = await prisma.membre.findUnique({
       where: { id: membreId },
-      select: { statut: true },
+      select: { id: true },
     });
     if (!membre) throw new NotFoundError("Membre");
 
     const periodeDebut = await versementRepo.getProchaineDateDisponible(membreId);
     const periodeFin = addDays(periodeDebut, nombreJours - 1);
-
-    if (membre.statut === "BLOQUE") {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      if (periodeFin > today) {
-        throw new ForbiddenError(
-          "Compte bloqué pour retard critique : ce versement dépasse la simple régularisation. Réduisez le montant pour ne couvrir que les jours déjà dus, ou contactez le trésorier.",
-        );
-      }
-    }
 
     const versement = await versementRepo.create({
       membreId,
@@ -245,22 +235,12 @@ export class VersementService {
 
     const membre = await prisma.membre.findUnique({
       where: { id: membreId },
-      select: { statut: true },
+      select: { id: true },
     });
     if (!membre) throw new NotFoundError("Membre");
 
     const periodeDebut = await versementRepo.getProchaineDateDisponible(membreId);
     const periodeFin = addDays(periodeDebut, nombreJours - 1);
-
-    if (membre.statut === "BLOQUE") {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      if (periodeFin > today) {
-        throw new ForbiddenError(
-          "Compte bloqué pour retard critique : ce versement dépasse la simple régularisation. Réduisez le montant pour ne couvrir que les jours déjà dus.",
-        );
-      }
-    }
 
     const versement = await prisma.$transaction(async (tx) => {
       const v = await tx.versement.create({

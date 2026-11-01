@@ -60,7 +60,7 @@ app.get("/health", (req, res) => {
     message: "API is running",
     version: "1.0.0",
     timestamp: new Date().toISOString(),
-    uptime: process.uptime(), // Optionnel : temps d'exécution depuis le dernier redémarrage
+    uptime: process.uptime(),
   });
 });
 

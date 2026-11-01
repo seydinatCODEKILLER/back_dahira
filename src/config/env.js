@@ -64,4 +64,7 @@ export const env = {
   ),
 
   LOG_LEVEL: process.env.LOG_LEVEL || (isProd ? "info" : "debug"),
+  VAPID_PUBLIC_KEY: process.env.VAPID_PUBLIC_KEY || "",
+  VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY || "",
+  VAPID_SUBJECT: process.env.VAPID_SUBJECT || "",
 };

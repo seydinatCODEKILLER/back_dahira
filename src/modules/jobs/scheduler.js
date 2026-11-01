@@ -27,11 +27,11 @@ export const initScheduler = () => {
     }
   });
 
-  // ━━━━━ Tâche 2 : Marquer les retards critiques (Règle des 48h) ━━━━━
+  // ━━━━━ Tâche 2 : Marquer les retards (délai de régularisation dépassé) ━━━━━
   // S'exécute tous les jours à 01:00 (1h du matin)
   // Pour éviter de surcharger le serveur en même temps que la génération
   cron.schedule("0 1 * * *", async () => {
-    logger.info("⏳ [CRON 01:00] Détection des retards critiques (> 48h)...");
+    logger.info("⏳ [CRON 01:00] Détection des cotisations en retard...");
     try {
       const result = await cotisationService.marquerRetards();
       logger.info(`✅ [CRON] ${result.message}`);
@@ -52,10 +52,10 @@ export const initScheduler = () => {
     }
   });
 
-  // ━━━━━ Tâche 4 : Détection des retards critiques (Alertes) ━━━━━
+  // ━━━━━ Tâche 4 : Alertes de rappel pour les retards ━━━━━
   // S'exécute tous les jours à 08:05 (juste après les échéances)
   cron.schedule("5 8 * * *", async () => {
-    logger.info("⏳ [CRON 08:05] Génération des alertes de retard critique...");
+    logger.info("⏳ [CRON 08:05] Génération des alertes de retard...");
     try {
       const result = await alerteService.detecterRetards();
       logger.info(`✅ [CRON] ${result.count} alerte(s) de retard envoyée(s).`);

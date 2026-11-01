@@ -22,7 +22,7 @@ importers:
         version: 2.9.0
       compression:
         specifier: ^1.8.1
-        version: 1.8.1
+        version: 1.8.1(supports-color@5.5.0)
       cookie-parser:
         specifier: ^1.4.7
         version: 1.4.7
@@ -37,10 +37,10 @@ importers:
         version: 6.1.0
       express:
         specifier: ^5.1.0
-        version: 5.2.1
+        version: 5.2.1(supports-color@5.5.0)
       express-rate-limit:
         specifier: ^8.2.1
-        version: 8.3.2(express@5.2.1)
+        version: 8.3.2(express@5.2.1(supports-color@5.5.0))
       helmet:
         specifier: ^8.1.0
         version: 8.1.0
@@ -64,10 +64,13 @@ importers:
         version: 6.2.8(openapi-types@12.1.3)
       swagger-ui-express:
         specifier: ^5.0.1
-        version: 5.0.1(express@5.2.1)
+        version: 5.0.1(express@5.2.1(supports-color@5.5.0))
       uuid:
         specifier: ^13.0.0
         version: 13.0.0
+      web-push:
+        specifier: ^3.6.7
+        version: 3.6.7(supports-color@5.5.0)
       zod:
         specifier: ^4.1.13
         version: 4.3.6
@@ -164,6 +167,10 @@ packages:
     resolution: {integrity: sha512-5cvg6CtKwfgdmVqY1WIiXKc3Q1bkRqGLi+2W/6ao+6Y7gu/RCwRuAhGEzh5B4KlszSuTLgZYuqFqo5bImjNKng==}
     engines: {node: '>= 0.6'}
 
+  agent-base@7.1.4:
+    resolution: {integrity: sha512-MnA+YT8fwfJPgBx3m60MNqakm30XOkyIoH1y6huTQvC0PwZG7ki8NacLBcrPbNoo8vEZy7Jpuk7+jMO+CUovTQ==}
+    engines: {node: '>= 14'}
+
   ajv@6.14.0:
     resolution: {integrity: sha512-IWrosm/yrn43eiKqkfkHis7QioDleaXQHdDVPKg0FSwwd/DuvyX79TZnFOnYpB7dcsFAMmtFztZuXPDvSePkFw==}
 
@@ -176,6 +183,9 @@ packages:
 
   argparse@2.0.1:
     resolution: {integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==}
+
+  asn1.js@5.4.1:
+    resolution: {integrity: sha512-+I//4cYPccV8LdmBLiX8CYvf9Sp3vQsrqu2QNXRcrbiWvcx/UdlFiqUJJzxRQxgsZmvhXhn4cSKeSmoFjVdupA==}
 
   asn1@0.2.6:
     resolution: {integrity: sha512-ix/FxPn0MDjeyJ7i/yoHGFt/EX6LyNbxSEhPPXODPL+KB0VPk86UYfL0lMdy+KCnv+fmvIzySwaK5COwqVbWTQ==}
@@ -217,6 +227,9 @@ packages:
 
   bluebird@3.7.2:
     resolution: {integrity: sha512-XpNj6GDQzdfW+r2Wnn7xiSAd7TM3jzkxGXBGTtWKuSXv1xUV+azxAm8jdWZN06QTQk+2N2XB9jRDkvbmQmcRtg==}
+
+  bn.js@4.12.5:
+    resolution: {integrity: sha512-3aRg6/JxfffFD+OlOjOFR3Vo79l39ooBTFucxx+MT3dhCtzn3EmiUPQo+6/OZuI2jbXi3YKgmiTFBgChQMwIRQ==}
 
   body-parser@2.2.2:
     resolution: {integrity: sha512-oP5VkATKlNwcgvxi0vM0p/D3n2C3EReYVX+DNYs5TjZFn/oQt2j+4sVJtSMr18pdRr8wjTcBl6LoV+FUwzPmNA==}
@@ -610,6 +623,14 @@ packages:
     resolution: {integrity: sha512-CAbnr6Rz4CYQkLYUtSNXxQPUH2gK8f3iWexVlsnMeD+GjlsQ0Xsy1cOX+mN3dtxYomRy21CiOzU8Uhw6OwncEQ==}
     engines: {node: '>=0.8', npm: '>=1.3.7'}
 
+  http_ece@1.2.0:
+    resolution: {integrity: sha512-JrF8SSLVmcvc5NducxgyOrKXe3EsyHMgBFgSaIUGmArKe+rwr0uphRkRXvwiom3I+fpIfoItveHrfudL8/rxuA==}
+    engines: {node: '>=16'}
+
+  https-proxy-agent@7.0.6:
+    resolution: {integrity: sha512-vK9P5/iUfdl95AI+JVyUuIcVtd4ofvtrOr3HNtM2yxC9bnMbEdp3x01OhQNnjb8IJYi38VlTE3mBXwcfvywuSw==}
+    engines: {node: '>= 14'}
+
   iconv-lite@0.7.2:
     resolution: {integrity: sha512-im9DjEDQ55s9fL4EYzOAv0yMqmMBSZp6G0VvFyTMPKWxiSBHUj9NW/qqLmXUwXrrM7AvqSlTCfvqRb0cM8yYqw==}
     engines: {node: '>=0.10.0'}
@@ -761,6 +782,9 @@ packages:
   mime-types@3.0.2:
     resolution: {integrity: sha512-Lbgzdk0h4juoQ9fCKXW4by0UJqj+nOOrI9MJ1sSj4nI8aI2eo1qmvQEie4VD1glsS250n15LsWsYtCugiStS5A==}
     engines: {node: '>=18'}
+
+  minimalistic-assert@1.0.1:
+    resolution: {integrity: sha512-UtJcAD4yEaGtjPezWuO9wC4nwUnVH/8/Im3yEHQP4b67cXlD/Qr9hdITCU1xDbSEXg2XKNaP8jsReV7vQd00/A==}
 
   minimatch@10.2.5:
     resolution: {integrity: sha512-MULkVLfKGYDFYejP07QOurDLLQpcjk7Fw+7jXS2R2czRQzR56yHRveU5NDJEOviH+hETZKSkIk5c+T23GjFUMg==}
@@ -1140,7 +1164,7 @@ packages:
 
   uuid@3.4.0:
     resolution: {integrity: sha512-HjSDRw6gZE5JMggctHBcjVak08+KEVhSIiDzFnT9S9aegmp85S/bReBVTb4QTFaRNptJ9kuYaNhnbNEOkbKb/A==}
-    deprecated: Please upgrade  to version 7 or higher.  Older versions may use Math.random() in certain circumstances, which is known to be problematic.  See https://v8.dev/blog/math-random for details.
+    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
     hasBin: true
 
   validator@13.15.35:
@@ -1154,6 +1178,11 @@ packages:
   verror@1.10.0:
     resolution: {integrity: sha512-ZZKSmDAEFOijERBLkmYfJ+vmk3w+7hOLYDNkRCuRuMJGEmqYNCNLyBBFwWKVMhfwaEF3WOd0Zlw86U/WC/+nYw==}
     engines: {'0': node >=0.6.0}
+
+  web-push@3.6.7:
+    resolution: {integrity: sha512-OpiIUe8cuGjrj3mMBFWY+e4MMIkW3SVT+7vEIjvD9kejGUypv8GPDf84JdPWskK8zMRIJ6xYGm+Kxr8YkPyA0A==}
+    engines: {node: '>= 16'}
+    hasBin: true
 
   wrappy@1.0.2:
     resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
@@ -1267,6 +1296,8 @@ snapshots:
       mime-types: 3.0.2
       negotiator: 1.0.0
 
+  agent-base@7.1.4: {}
+
   ajv@6.14.0:
     dependencies:
       fast-deep-equal: 3.1.3
@@ -1282,6 +1313,13 @@ snapshots:
   append-field@1.0.0: {}
 
   argparse@2.0.1: {}
+
+  asn1.js@5.4.1:
+    dependencies:
+      bn.js: 4.12.5
+      inherits: 2.0.4
+      minimalistic-assert: 1.0.1
+      safer-buffer: 2.1.2
 
   asn1@0.2.6:
     dependencies:
@@ -1311,7 +1349,9 @@ snapshots:
 
   bluebird@3.7.2: {}
 
-  body-parser@2.2.2:
+  bn.js@4.12.5: {}
+
+  body-parser@2.2.2(supports-color@5.5.0):
     dependencies:
       bytes: 3.1.2
       content-type: 1.0.5
@@ -1418,11 +1458,11 @@ snapshots:
     dependencies:
       mime-db: 1.54.0
 
-  compression@1.8.1:
+  compression@1.8.1(supports-color@5.5.0):
     dependencies:
       bytes: 3.1.2
       compressible: 2.0.18
-      debug: 2.6.9
+      debug: 2.6.9(supports-color@5.5.0)
       negotiator: 0.6.4
       on-headers: 1.1.0
       safe-buffer: 5.2.1
@@ -1471,9 +1511,11 @@ snapshots:
 
   dateformat@4.6.3: {}
 
-  debug@2.6.9:
+  debug@2.6.9(supports-color@5.5.0):
     dependencies:
       ms: 2.0.0
+    optionalDependencies:
+      supports-color: 5.5.0
 
   debug@4.4.3(supports-color@5.5.0):
     dependencies:
@@ -1558,15 +1600,15 @@ snapshots:
       promise-retry: 2.0.1
       undici: 7.24.7
 
-  express-rate-limit@8.3.2(express@5.2.1):
+  express-rate-limit@8.3.2(express@5.2.1(supports-color@5.5.0)):
     dependencies:
-      express: 5.2.1
+      express: 5.2.1(supports-color@5.5.0)
       ip-address: 10.1.0
 
-  express@5.2.1:
+  express@5.2.1(supports-color@5.5.0):
     dependencies:
       accepts: 2.0.0
-      body-parser: 2.2.2
+      body-parser: 2.2.2(supports-color@5.5.0)
       content-disposition: 1.0.1
       content-type: 1.0.5
       cookie: 0.7.2
@@ -1576,7 +1618,7 @@ snapshots:
       encodeurl: 2.0.0
       escape-html: 1.0.3
       etag: 1.8.1
-      finalhandler: 2.1.1
+      finalhandler: 2.1.1(supports-color@5.5.0)
       fresh: 2.0.0
       http-errors: 2.0.1
       merge-descriptors: 2.0.0
@@ -1587,9 +1629,9 @@ snapshots:
       proxy-addr: 2.0.7
       qs: 6.15.0
       range-parser: 1.2.1
-      router: 2.2.0
-      send: 1.2.1
-      serve-static: 2.2.1
+      router: 2.2.0(supports-color@5.5.0)
+      send: 1.2.1(supports-color@5.5.0)
+      serve-static: 2.2.1(supports-color@5.5.0)
       statuses: 2.0.2
       type-is: 2.0.1
       vary: 1.1.2
@@ -1618,7 +1660,7 @@ snapshots:
     dependencies:
       to-regex-range: 5.0.1
 
-  finalhandler@2.1.1:
+  finalhandler@2.1.1(supports-color@5.5.0):
     dependencies:
       debug: 4.4.3(supports-color@5.5.0)
       encodeurl: 2.0.0
@@ -1739,6 +1781,15 @@ snapshots:
       assert-plus: 1.0.0
       jsprim: 1.4.2
       sshpk: 1.18.0
+
+  http_ece@1.2.0: {}
+
+  https-proxy-agent@7.0.6(supports-color@5.5.0):
+    dependencies:
+      agent-base: 7.1.4
+      debug: 4.4.3(supports-color@5.5.0)
+    transitivePeerDependencies:
+      - supports-color
 
   iconv-lite@0.7.2:
     dependencies:
@@ -1863,6 +1914,8 @@ snapshots:
   mime-types@3.0.2:
     dependencies:
       mime-db: 1.54.0
+
+  minimalistic-assert@1.0.1: {}
 
   minimatch@10.2.5:
     dependencies:
@@ -2089,7 +2142,7 @@ snapshots:
 
   retry@0.12.0: {}
 
-  router@2.2.0:
+  router@2.2.0(supports-color@5.5.0):
     dependencies:
       debug: 4.4.3(supports-color@5.5.0)
       depd: 2.0.0
@@ -2109,7 +2162,7 @@ snapshots:
 
   semver@7.7.4: {}
 
-  send@1.2.1:
+  send@1.2.1(supports-color@5.5.0):
     dependencies:
       debug: 4.4.3(supports-color@5.5.0)
       encodeurl: 2.0.0
@@ -2125,12 +2178,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  serve-static@2.2.1:
+  serve-static@2.2.1(supports-color@5.5.0):
     dependencies:
       encodeurl: 2.0.0
       escape-html: 1.0.3
       parseurl: 1.3.3
-      send: 1.2.1
+      send: 1.2.1(supports-color@5.5.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -2221,9 +2274,9 @@ snapshots:
     dependencies:
       '@scarf/scarf': 1.4.0
 
-  swagger-ui-express@5.0.1(express@5.2.1):
+  swagger-ui-express@5.0.1(express@5.2.1(supports-color@5.5.0)):
     dependencies:
-      express: 5.2.1
+      express: 5.2.1(supports-color@5.5.0)
       swagger-ui-dist: 5.32.1
 
   thread-stream@4.0.0:
@@ -2291,6 +2344,16 @@ snapshots:
       assert-plus: 1.0.0
       core-util-is: 1.0.2
       extsprintf: 1.3.0
+
+  web-push@3.6.7(supports-color@5.5.0):
+    dependencies:
+      asn1.js: 5.4.1
+      http_ece: 1.2.0
+      https-proxy-agent: 7.0.6(supports-color@5.5.0)
+      jws: 4.0.1
+      minimist: 1.2.8
+    transitivePeerDependencies:
+      - supports-color
 
   wrappy@1.0.2: {}
 

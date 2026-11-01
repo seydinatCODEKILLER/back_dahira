@@ -25,7 +25,7 @@ const toDateOnly = (value) => {
 };
 
 export class CotisationService {
-  // ─── Génération quotidienne (à brancher sur le futur scheduler) ──
+  // ─── Génération quotidienne (branchée sur le scheduler) ──────────
   async genererDuJour() {
     const config = await getConfigOrThrow();
     const today = toDateOnly();
@@ -53,21 +53,23 @@ export class CotisationService {
     };
   }
 
-  // ─── Détection des retards (à brancher sur le futur scheduler) ───
+  // ─── Détection des retards (branchée sur le scheduler) ───────────
+  // Passe en RETARD les cotisations qui dépassent le délai de
+  // régularisation. Aucune sanction : c'est une information, qui
+  // alimente le solde (EN_RETARD) et les alertes de rappel.
   async marquerRetards() {
     const config = await getConfigOrThrow();
     const result = await cotisationRepo.markOverdueAsRetard(
       config.delaiRegularisationJours,
     );
 
-    // Recalcule le solde des membres concernés — c'est ce qui bascule
-    // effectivement Membre.statut sur BLOQUE (cf. module soldes).
+    // Met à jour le statut du solde (EN_RETARD) des membres concernés.
     await Promise.all(
       result.membreIds.map((id) => soldeService.recalculerPourMembre(id)),
     );
 
     return {
-      message: `${result.count} cotisation(s) marquée(s) en retard critique`,
+      message: `${result.count} cotisation(s) marquée(s) en retard`,
       count: result.count,
     };
   }

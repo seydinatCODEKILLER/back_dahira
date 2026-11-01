@@ -50,23 +50,35 @@ export class AlerteService {
     return { count };
   }
 
-  // ─── Détection — retard critique (déjà BLOQUE via le module soldes) ─
+  // ─── Détection — retard ───────────────────────────────────────────
+  // Basée sur les cotisations en statut RETARD (délai de régularisation
+  // dépassé). Simple rappel au membre et au trésorier, sans blocage.
   async detecterRetards() {
-    const membresBloques = await prisma.membre.findMany({
-      where: { statut: "BLOQUE" },
-      select: { id: true, nom: true, prenom: true, matricule: true },
+    const membresEnRetard = await prisma.membre.findMany({
+      where: {
+        statut: "ACTIF",
+        cotisations: { some: { statut: "RETARD" } },
+      },
+      select: {
+        id: true,
+        nom: true,
+        prenom: true,
+        matricule: true,
+        _count: { select: { cotisations: { where: { statut: "RETARD" } } } },
+      },
     });
 
     let count = 0;
-    for (const membre of membresBloques) {
+    for (const membre of membresEnRetard) {
       const dejaEnvoyee = await alerteRepo.existsToday(membre.id, "RETARD");
       if (dejaEnvoyee) continue;
 
+      const nbJours = membre._count.cotisations;
       await alerteRepo.create({
         membreId: membre.id,
         type: "RETARD",
         destinataire: "LES_DEUX",
-        message: `Retard critique — le compte de ${membre.prenom} ${membre.nom} (${membre.matricule}) est bloqué jusqu'à régularisation complète du solde.`,
+        message: `${membre.prenom} ${membre.nom} (${membre.matricule}) a ${nbJours} jour(s) de cotisation en retard. Merci de régulariser dès que possible.`,
       });
       count++;
     }
